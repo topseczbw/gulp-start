@@ -56,7 +56,8 @@ function htmlTask() {
  */
 function jsTask() {
   // 读取src文件夹下所有js文件
-  return src('src/**/*.js')
+  // 注意js文件打包引入的先后顺序，先导入lib，再导入应用代码
+  return src(['src/lib/*.js', 'src/js/*.js'])
           .pipe(babel({ // 编译es6
             presets: ['@babel/env']
           }))
