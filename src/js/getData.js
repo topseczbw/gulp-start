@@ -6,7 +6,7 @@ function login() {
     }
   }
   xhr.open('POST', '/api/entrance/login')
-  const data = 'email=zhangbowen6%40100tal.com&password=reSuCI&verifyCode=344&key=123'
+  const data = 'email=xxxx&password=xxxxx&verifyCode=344&key=123'
   xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   xhr.send(data)
 }
