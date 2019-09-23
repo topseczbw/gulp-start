@@ -6,10 +6,9 @@ const rename = require("gulp-rename");
 const concat = require('gulp-concat');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
-// const browserSync = require('browser-sync').create();
-// const reload = browserSync.reload;
 const connect = require('gulp-connect');
 const proxy = require('http-proxy-middleware');
+
 /**
  * @description 删除dist文件夹
  * @param {function} done
@@ -19,9 +18,12 @@ function cleanTask(done) {
     done()
 }
 
+/**
+ * @description 起服务
+ */
 function serverTask() {
   connect.server({
-    root: './',
+    root: './dist',
     port: 8888,
     livereload: true,
     middleware: function(connect, opt) {
@@ -29,8 +31,8 @@ function serverTask() {
             proxy('/api/',  {
                 target: 'https://devtk.aibeike.com',
                 changeOrigin:true,
-                pathRewrite: {
-                  '^/': ''
+                pathRewrite: {  // 覆写路径
+                  '^/api/': ''
                 }
             })
         ]
@@ -39,7 +41,17 @@ function serverTask() {
 }
 
 /**
- * @description js任务
+ * @description 处理html任务
+ * @returns
+ */
+function htmlTask() {
+  return src('src/index.html')
+          .pipe(dest('dist'))
+          .pipe(connect.reload()) // 热加载
+}
+
+/**
+ * @description 处理js任务
  * @returns
  */
 function jsTask() {
@@ -52,12 +64,11 @@ function jsTask() {
           .pipe(concat('bundle.js')) // 合并所有文件，输出all.js文件
           // .pipe(rename('bundle.js')) // 重命名为zbw.js
           .pipe(dest('./dist/js/'))  // 输出到根目录下dist文件夹
-          .pipe(connect.reload())
-          // .pipe(reload({ stream: true }))
+          .pipe(connect.reload()) // 热加载
 }
 
 /**
- * @description css任务
+ * @description 处理css任务
  * @returns
  */
 function cssTask() {
@@ -71,7 +82,6 @@ function cssTask() {
           }))
           .pipe(dest('./dist'))
           .pipe(connect.reload())
-          // .pipe(reload({ stream: true }))
 }
 
 /**
@@ -80,23 +90,12 @@ function cssTask() {
 function watcherTask() {
   watch('src/**/*.scss', cssTask)
   watch('src/**/*.js', jsTask)
+  watch('src/index.html', htmlTask)
 }
 
-/**
- * @description 起服务
- * @param {function} done
- */
-// function server(done) {
-//   browserSync.init({
-//     server: {
-//       baseDir: './'  // 指定根目录
-//     }
-//   })
-//   done()
-// }
+// server 任务必须在 watchTask之前
+const assetsTask = series(cleanTask, htmlTask, jsTask, cssTask, serverTask)
 
+const buildTask = parallel(assetsTask, watcherTask)
 
-// server 任务必须在 watchTash之前
-const buildTask = series(cleanTask, jsTask, cssTask, serverTask)
-
-exports.default = parallel(buildTask, watcherTask);
+exports.default = buildTask;
